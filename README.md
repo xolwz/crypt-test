@@ -45,6 +45,7 @@ Errors:
 | `MASTER_SECRET` | yes | 32+ chars. Derives payload keys + signatures. |
 | `BUILDS` | no | Comma-separated allowed buildIds. Empty = any valid format. |
 | `MACHINES` | no | Comma-separated allowed machine ids. Empty = any valid. |
+| `LICENSES` | yes (for /v1/license) | Comma-separated valid license keys. |
 | `KEY_TTL` | no | Seconds a key response is valid. Default 300. |
 | `RATE_LIMIT` | no | Requests/minute/IP. Default 30. |
 | `PORT` | auto | Railway injects it. Server binds `0.0.0.0`. |

@@ -21,6 +21,9 @@ const BUILDS = new Set(
 const MACHINES = new Set(
   (process.env.MACHINES || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
 );
+const LICENSES = new Set(
+  (process.env.LICENSES || "").split(",").map(s => s.trim()).filter(Boolean)
+);
 
 const KEY_TTL = Number(process.env.KEY_TTL || 300); // seconds
 const HEX64 = /^[a-f0-9]{64}$/;
@@ -76,8 +79,23 @@ app.post("/v1/key", limiter, (req, res) => {
   res.json({ ok: true, key, expires, sig, ttl: KEY_TTL });
 });
 
-app.post("/v1/verify", limiter, (req, res) => {
-  const { buildId, nonce, expires, sig } = req.body || {};
+app.post("/v1/license", limiter, (req, res) => {
+  const { license, machineId } = req.body || {};
+  if (typeof license !== "string" || license.length < 4 || license.length > 128)
+    return res.status(400).json({ ok: false, error: "bad license" });
+  if (LICENSES.size === 0)
+    return res.status(503).json({ ok: false, error: "licenses not configured" });
+
+  const hit = LICENSES.has(license) ||
+              [...LICENSES].some(k => k.toLowerCase() === license.toLowerCase());
+  if (!hit)
+    return res.status(200).json({ ok: false, valid: false, error: "invalid license" });
+
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, valid: true, machine: typeof machineId === "string" ? machineId : null });
+});
+
+app.post("/v1/verify", limiter, (req, res) => {  const { buildId, nonce, expires, sig } = req.body || {};
   if (typeof buildId !== "string" || !BUILD_ID.test(buildId) ||
       typeof nonce !== "string" || !Number.isInteger(expires) ||
       typeof sig !== "string" || sig.length !== 64)
